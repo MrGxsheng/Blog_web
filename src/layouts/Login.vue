@@ -13,8 +13,8 @@
           </q-card-section>
           <q-card-section>
             <q-input
-                v-model="usernameR"
-                ref="usernameRef"
+                v-model="accountR"
+                ref="accountRef"
                 rounded
                 label="用户名"
                 :lazy-rules="true"
@@ -26,6 +26,7 @@
           <q-card-section>
             <q-input
                 v-model="passwordR"
+                type="password"
                 ref="passwordRef"
                 rounded
                 label="密码"
@@ -38,6 +39,7 @@
             <q-card-section v-if="registerR">
               <q-input
                   v-model="conformR"
+                  type="password"
                   ref="passwordConformRef"
                   rounded
                   label="确认密码"
@@ -51,7 +53,7 @@
           <q-card-section>
             <q-btn-group>
               <q-btn @click="registerR = !registerR;switchLabel()" color="secondary" :label="first"/>
-              <q-btn @click="login" color="primary" style="width: 205px;" :label="second"/>
+              <q-btn @click="handlerLogin" color="primary" style="width: 205px;" :label="second"/>
             </q-btn-group>
           </q-card-section>
 
@@ -68,11 +70,11 @@ import {api} from "../boot/axios";
 import {CommFail, CommSuccess} from "../components/NotifyTools";
 import {useRouter} from 'vue-router'
 
-const $router = useRouter
+const $router = useRouter()
 
 const pageTitle = ref("登录")
-const usernameR = ref("")
-const usernameRef = ref(null)
+const accountR = ref("")
+const accountRef = ref(null)
 const passwordR = ref("")
 const passwordRef = ref(null)
 const conformR = ref("")
@@ -108,7 +110,7 @@ function passwordConformHandler() {
 
 // 重置输入框
 function clearAll() {
-  usernameR.value = "";
+  accountR.value = "";
   passwordR.value = "";
   conformR.value = "";
 }
@@ -128,16 +130,16 @@ function handlerLogin() {
   localStorage.clear();
   if (second.value === '登录' && loginRule()) { // 登录
     api.post("/user/login", {
-      "name": usernameR.value,
+      "account": accountR.value,
       "password": passwordR.value
     }).then(res => {
-      if (res.code === "200") {
+      if (res.data.code === "200") {
         setUserInfo(res.data);
         CommSuccess("登录成功");
       }
     })
   } else if (second.value === '注册' && regRule()) { // 注册
-    register(usernameR.value);
+    register(accountR.value);
   }
 }
 
@@ -145,14 +147,14 @@ function handlerLogin() {
 async function register(val) {
   const nameE = await api.get("/user", {
     params: {
-      "username": val
+      "account": val
     }
   }).then(res => {
     return res.data;
   });
   if (!nameE) {
-    await api.post("/user", {
-      "name": usernameR.value,
+    await api.post("/user/reg", {
+      "account": accountR.value,
       "password": passwordR.value
     }).then(res => {
       setUserInfo(res.data);
@@ -166,7 +168,7 @@ async function register(val) {
 
 // 登录请求限制
 function loginRule() {
-  return !(usernameR.value === '' || passwordR.value === '');
+  return !(accountR.value === '' || passwordR.value === '');
 }
 
 // 注册请求限制
@@ -176,9 +178,10 @@ function regRule() {
 
 // 从本地获取用户基本信息
 function setUserInfo(data) {
+  console.log(data.data)
   // localStorage.setItem("token", data.token);
-  localStorage.setItem("username", data.user.name);
-  localStorage.setItem("avatar", data.user.avatar);
+  localStorage.setItem("username", data.data.username);
+  localStorage.setItem("avatar", data.data.avatar);
   $router.push("/");
 }
 
