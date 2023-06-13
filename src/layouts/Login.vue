@@ -150,8 +150,9 @@ async function register(val) {
       "account": val
     }
   }).then(res => {
-    return res.data;
+    return res.data.data;
   });
+
   if (!nameE) {
     await api.post("/user/reg", {
       "account": accountR.value,
@@ -185,6 +186,9 @@ function setUserInfo(data) {
   $router.push("/");
 }
 
+{
+  localStorage.clear()
+}
 
 </script>
 
