@@ -183,6 +183,7 @@ function setUserInfo(data) {
   // localStorage.setItem("token", data.token);
   localStorage.setItem("username", data.data.username);
   localStorage.setItem("avatar", data.data.avatar);
+  localStorage.setItem("userId", data.data.id);
   $router.push("/");
 }
 

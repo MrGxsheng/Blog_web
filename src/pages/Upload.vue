@@ -14,15 +14,14 @@
           <div class="text-light-green-7">新增修改一体</div>
           <p/>
           <q-uploader
-              label="上传文件"
+              label="上传笔记"
+              :url=urlFile
               field-name="file"
-              url="note"
               multiple
-              batch
               with-credentials
               accept=".md"
-              @rejected="CommFail('格式错误，只接受md格式')"
-
+              @uploaded="CommSuccess('上传成功')"
+              @uploading="CommSuccess('正在上传')"
           />
         </q-card-section>
 
@@ -46,12 +45,13 @@
         <q-card-section style="height: auto" class="scroll">
           <div class="text-light-green-7">新增修改一体</div>
           <q-uploader
-              style="max-width: 300px;"
-              url="img"
               label="上传图片"
+              :url=imgFile
+              field-name="file"
               multiple
               accept=".jpg, image/*"
-              @rejected="CommFail('格式错误，只接收图片')"
+              @uploaded="CommSuccess('上传成功')"
+              @uploading="CommSuccess('正在上传')"
           />
         </q-card-section>
 
@@ -72,21 +72,33 @@
 
         <div style="margin: auto">
           <div class="q-pa-md q-gutter-sm" style="margin: auto">
-            <q-btn color="primary" label="刷新"/>
+            <q-btn color="primary" label="刷新" @click="getBlog"/>
             <q-btn color="secondary" label="批量上传" @click="text = !text"/>
-            <q-btn color="deep-orange" label="删除"/>
+            <q-btn color="deep-orange" label="删除" @click="deleteBlog"/>
           </div>
 
 
           <div class="q-pa-md">
             <q-table
-                title="Treats"
+                title="笔记"
                 :rows="rows"
                 :columns="columns"
-                row-key="name"
-                selection="single"
-                v-model:selected="selected"
+                row-key="noteName"
+                :selected-rows-label="getSelectedString"
+                selection="multiple"
+                v-model:selected="fileArr"
+                hide-bottom
             />
+
+            <div class="q-pa-lg flex flex-center" style="padding-top: 0;">
+              <q-pagination
+                  v-model="currentPage"
+                  :max="maxPage"
+                  input
+                  input-class="text-orange-10"
+                  @click="getBlog"
+              />
+            </div>
           </div>
 
           <div class="q-pa-md q-gutter-sm" style="margin: auto">
@@ -95,15 +107,10 @@
             <q-btn color="deep-orange" label="删除"/>
           </div>
 
-          <div className="q-pa-md">
-            <q-table
-                :rows="rows"
-                :columns="columns"
-                row-key="name"
-                selection="single"
-                v-model:selected="selected"
-            />
-          </div>
+          <q-card class="my-card" v-for="(img, index) in imgArr" :key="index">
+            <q-img :src="img.imgPath" alt="image"></q-img>
+          </q-card>
+
         </div>
       </div>
       <!--   右一   -->
@@ -115,139 +122,96 @@
 </template>
 
 <script setup>
-import {CommFail} from "../components/NotifyTools";
-import {ref} from "vue";
+import {CommFail, CommSuccess} from "../components/NotifyTools";
+import {ref, watch} from "vue";
+import {api} from "../boot/axios";
 
-const text = ref(false);
+const baseUrl = ref("http://localhost:8080")
+const text = ref(false)
 const img = ref(false)
+const fileArr = ref([])
+const userId = ref("2")
+const type = ref("all")
+const urlFile = ref("/note/upload/")
+const imgFile = ref("/image/upload/")
+const imgArr = ref([])
+
+const currentPage = ref(1)
+const pageSize = ref(5)
+const maxPage = ref(5)
+
+{
+  userId.value = localStorage.getItem("userId")
+  urlFile.value = baseUrl.value + urlFile.value + type.value + "/" + userId.value
+  imgFile.value = baseUrl.value + imgFile.value + userId.value
+  getBlog()
+  getImg()
+}
+
+watch(type, (newValue, oldValue) => {
+  urlFile.value = urlFile.value + "/" + newValue + "/" + userId.value
+})
+
+function getSelectedString() {
+  return fileArr.value.length === 0 ? '' : `${fileArr.value.length} record${fileArr.value.length > 1 ? 's' : ''} selected of ${rows.length}`
+}
 
 const columns = [
   {
-    name: 'desc',
+    name: 'noteName',
     required: true,
-    label: 'Dessert (100g serving)',
+    label: '笔记名称',
     align: 'left',
-    field: row => row.name,
+    field: row => row.noteName,
     format: val => `${val}`,
     sortable: true
   },
-  {name: 'calories', align: 'center', label: 'Calories', field: 'calories', sortable: true},
-  {name: 'fat', label: 'Fat (g)', field: 'fat', sortable: true},
-  {name: 'carbs', label: 'Carbs (g)', field: 'carbs'},
-  {name: 'protein', label: 'Protein (g)', field: 'protein'},
-  {name: 'sodium', label: 'Sodium (mg)', field: 'sodium'},
-  {
-    name: 'calcium',
-    label: 'Calcium (%)',
-    field: 'calcium',
-    sortable: true,
-    sort: (a, b) => parseInt(a, 10) - parseInt(b, 10)
-  },
-  {name: 'iron', label: 'Iron (%)', field: 'iron', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10)}
+  {name: 'type', align: 'center', label: '类型', field: 'type', sortable: true},
+  {name: 'updateTime', label: '更新时间', field: 'updateTime', sortable: true},
+  {name: 'createTime', label: '创建时间', field: 'createTime', sortable: true},
+
 ]
 
-const rows = [
-  {
-    name: 'Frozen Yogurt',
-    calories: 159,
-    fat: 6.0,
-    carbs: 24,
-    protein: 4.0,
-    sodium: 87,
-    calcium: '14%',
-    iron: '1%'
-  },
-  {
-    name: 'Ice cream sandwich',
-    calories: 237,
-    fat: 9.0,
-    carbs: 37,
-    protein: 4.3,
-    sodium: 129,
-    calcium: '8%',
-    iron: '1%'
-  },
-  {
-    name: 'Eclair',
-    calories: 262,
-    fat: 16.0,
-    carbs: 23,
-    protein: 6.0,
-    sodium: 337,
-    calcium: '6%',
-    iron: '7%'
-  },
-  {
-    name: 'Cupcake',
-    calories: 305,
-    fat: 3.7,
-    carbs: 67,
-    protein: 4.3,
-    sodium: 413,
-    calcium: '3%',
-    iron: '8%'
-  },
-  {
-    name: 'Gingerbread',
-    calories: 356,
-    fat: 16.0,
-    carbs: 49,
-    protein: 3.9,
-    sodium: 327,
-    calcium: '7%',
-    iron: '16%'
-  },
-  {
-    name: 'Jelly bean',
-    calories: 375,
-    fat: 0.0,
-    carbs: 94,
-    protein: 0.0,
-    sodium: 50,
-    calcium: '0%',
-    iron: '0%'
-  },
-  {
-    name: 'Lollipop',
-    calories: 392,
-    fat: 0.2,
-    carbs: 98,
-    protein: 0,
-    sodium: 38,
-    calcium: '0%',
-    iron: '2%'
-  },
-  {
-    name: 'Honeycomb',
-    calories: 408,
-    fat: 3.2,
-    carbs: 87,
-    protein: 6.5,
-    sodium: 562,
-    calcium: '0%',
-    iron: '45%'
-  },
-  {
-    name: 'Donut',
-    calories: 452,
-    fat: 25.0,
-    carbs: 51,
-    protein: 4.9,
-    sodium: 326,
-    calcium: '2%',
-    iron: '22%'
-  },
-  {
-    name: 'KitKat',
-    calories: 518,
-    fat: 26.0,
-    carbs: 65,
-    protein: 7,
-    sodium: 54,
-    calcium: '12%',
-    iron: '6%'
+const rows = ref([])
+
+function getBlog() {
+  api.get("/note/all", {
+    params: {
+      "userId": userId.value,
+      "currentPage": currentPage.value,
+      "pageSize": pageSize.value
+    }
+  }).then(res => {
+    maxPage.value = (res.data.data.total + pageSize.value - 1) / pageSize.value;
+    rows.value = res.data.data.list;
+  })
+}
+
+async function deleteBlog() {
+  console.log(1)
+  console.log(fileArr.value[0].id)
+  for (let i = 0; i < fileArr.value.length; i++) {
+    await api.delete("/note/delete", {
+      params: {
+        "id": fileArr.value[i].id
+      }
+    })
+
+    CommSuccess("删除成功")
+    getBlog()
   }
-]
+}
+
+function getImg() {
+  api.get("/image/allImg", {
+    params: {
+      "userId": userId.value
+    }
+  }).then(res => {
+    imgArr.value = res.data.data.list
+    console.log(imgArr.value)
+  })
+}
 
 
 </script>
