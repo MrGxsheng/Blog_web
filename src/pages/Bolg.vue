@@ -34,8 +34,8 @@ const title = ref("")
 </script>
 
 <style scoped>
-.img{
-  width: 100%;
+.html {
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
 }

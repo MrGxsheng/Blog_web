@@ -102,7 +102,7 @@
           </div>
 
           <div class="q-pa-md q-gutter-sm" style="margin: auto">
-            <q-btn color="primary" label="刷新"/>
+            <q-btn color="primary" label="刷新" @click="getImg"/>
             <q-btn color="secondary" label="批量上传" @click="img = !img"/>
             <q-btn color="deep-orange" label="删除"/>
           </div>
@@ -184,6 +184,7 @@ function getBlog() {
   }).then(res => {
     maxPage.value = (res.data.data.total + pageSize.value - 1) / pageSize.value;
     rows.value = res.data.data.list;
+    CommSuccess("获取成功")
   })
 }
 
@@ -209,7 +210,7 @@ function getImg() {
     }
   }).then(res => {
     imgArr.value = res.data.data.list
-    console.log(imgArr.value)
+    CommSuccess("获取成功")
   })
 }
 
