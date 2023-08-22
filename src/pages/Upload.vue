@@ -14,12 +14,12 @@
           <div class="text-light-green-7">新增修改一体</div>
           <p/>
           <q-uploader
+              ref="noteUploader"
               label="上传笔记"
-              :url=urlFile
-              field-name="file"
               multiple
-              with-credentials
               accept=".md"
+              hide-upload-btn
+              :factory="uploadFn"
               @uploaded="CommSuccess('上传成功')"
               @uploading="CommSuccess('正在上传')"
           />
@@ -29,7 +29,7 @@
 
         <q-card-actions align="right">
           <q-btn flat label="取消" color="primary" v-close-popup/>
-          <q-btn flat label="上传" color="primary" v-close-popup/>
+          <q-btn flat label="上传" color="primary" @click="submit"/>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -46,9 +46,10 @@
           <div class="text-light-green-7">新增修改一体</div>
           <q-uploader
               label="上传图片"
-              :url=imgFile
-              field-name="file"
+              ref="imgUploader"
               multiple
+              hide-upload-btn
+              :factory="uploadImgFn"
               accept=".jpg, image/*"
               @uploaded="CommSuccess('上传成功')"
               @uploading="CommSuccess('正在上传')"
@@ -59,7 +60,7 @@
 
         <q-card-actions align="right">
           <q-btn flat label="取消" color="primary" v-close-popup/>
-          <q-btn flat label="上传" color="primary" v-close-popup/>
+          <q-btn flat label="上传" color="primary" @click="submitImg"/>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -122,11 +123,12 @@
 </template>
 
 <script setup>
-import {CommFail, CommSuccess} from "../components/NotifyTools";
+import {CommSuccess} from "../components/NotifyTools";
 import {ref, watch} from "vue";
 import {api} from "../boot/axios";
+import {BASE_URL} from "../components/models";
 
-const baseUrl = ref("http://localhost:8080")
+const baseUrl = ref(BASE_URL)
 const text = ref(false)
 const img = ref(false)
 const fileArr = ref([])
@@ -139,6 +141,10 @@ const imgArr = ref([])
 const currentPage = ref(1)
 const pageSize = ref(5)
 const maxPage = ref(5)
+
+// 前端上传器本体
+const noteUploader = ref(null);
+const imgUploader = ref(null);
 
 {
   userId.value = localStorage.getItem("userId")
@@ -213,6 +219,56 @@ function getImg() {
     CommSuccess("获取成功")
   })
 }
+
+// 上传文件
+function uploadFn(files) {
+  return new Promise(resolve => {
+    resolve({
+      "url": BASE_URL + imgFile + userId.value, // todo Url
+      "fieldName": "file"
+      // "formFields": [
+      //   {
+      //     "name": "field",
+      //     "value": field.value
+      //   },
+      //   {
+      //     name: "createTime",
+      //     value: createTime
+      //   }
+      // ],
+      // "headers": [{
+      //   "name": "Content-Type",
+      //   "value": 'application/json'
+      // }]
+    })
+  })
+}
+
+// 上传图片
+function uploadImgFn(files) {
+  return new Promise(resolve => {
+    resolve({
+      "url": BASE_URL + "/note/upload/all/" + userId.value, // todo ImgUrl
+      "fieldName": "file"
+    })
+  })
+}
+
+
+
+// 按下上传按钮
+function submit() {
+  noteUploader.value.upload();
+}
+
+function submitImg() {
+  ImgUploader.value.upload();
+}
+
+// 上传成功回调
+// function finish(info){
+//   console.log(info.xhr);
+// }
 
 
 </script>
