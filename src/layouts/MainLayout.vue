@@ -22,8 +22,8 @@
                 style="color: rgba(255,255,255,0.5);">
           <q-route-tab to="/Upload" label="upload"/>
           <q-route-tab to="/login" label="quit"/>
-          <q-avatar style="height: 40px;width: 40px">
-            <q-img src="https://cdn.quasar.dev/img/avatar.png" />
+          <q-avatar style="height: 35px;width: 40px">
+            <q-img src="~assets/headPhoto.jpg" />
           </q-avatar>
 
         </q-tabs>
