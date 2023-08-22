@@ -1,6 +1,6 @@
 <template>
   <q-img
-      src="src/assets/xsheng_01.jpg"
+      src="~assets/xsheng_01.jpg"
       style="width: 101%;height: 101%;position: fixed;z-index: -1"
   />
 
