@@ -17,6 +17,7 @@
               ref="noteUploader"
               label="上传笔记"
               multiple
+              batch
               accept=".md"
               hide-upload-btn
               :factory="uploadFn"
@@ -48,6 +49,7 @@
               label="上传图片"
               ref="imgUploader"
               multiple
+              batch
               hide-upload-btn
               :factory="uploadImgFn"
               accept=".jpg, image/*"
@@ -224,7 +226,7 @@ function getImg() {
 function uploadFn(files) {
   return new Promise(resolve => {
     resolve({
-      "url": BASE_URL + imgFile + userId.value, // todo Url
+      "url": BASE_URL + "/note/upload/all/" + userId.value, // todo Url
       "fieldName": "file"
       // "formFields": [
       //   {
@@ -248,7 +250,7 @@ function uploadFn(files) {
 function uploadImgFn(files) {
   return new Promise(resolve => {
     resolve({
-      "url": BASE_URL + "/note/upload/all/" + userId.value, // todo ImgUrl
+      "url": BASE_URL + imgFile + userId.value, // todo Url
       "fieldName": "file"
     })
   })
