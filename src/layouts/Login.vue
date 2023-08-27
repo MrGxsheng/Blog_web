@@ -66,7 +66,7 @@
 <script setup>
 import Image from "../components/BackGroundImage.vue";
 import {ref} from "vue";
-import {api} from "../boot/axios";
+import {api, apiR} from "../boot/axios";
 import {CommFail, CommSuccess} from "../components/NotifyTools";
 import {useRouter} from 'vue-router'
 
@@ -106,8 +106,6 @@ function passwordConformHandler() {
 }
 
 
-
-
 // 重置输入框
 function clearAll() {
   accountR.value = "";
@@ -129,7 +127,7 @@ function switchLabel() {
 function handlerLogin() {
   localStorage.clear();
   if (second.value === '登录' && loginRule()) { // 登录
-    api.post("/user/login", {
+    apiR.post("/user/login", {
       "account": accountR.value,
       "password": passwordR.value
     }).then(res => {
@@ -145,7 +143,7 @@ function handlerLogin() {
 
 // 注册
 async function register(val) {
-  const nameE = await api.get("/user", {
+  const nameE = await apiR.get("/user", {
     params: {
       "account": val
     }
@@ -154,7 +152,7 @@ async function register(val) {
   });
 
   if (!nameE) {
-    await api.post("/user/reg", {
+    await apiR.post("/user/reg", {
       "account": accountR.value,
       "password": passwordR.value
     }).then(res => {
@@ -178,13 +176,14 @@ function regRule() {
 }
 
 // 从本地获取用户基本信息
-function setUserInfo(data) {
+async function setUserInfo(data) {
   console.log(data.data)
   // localStorage.setItem("token", data.token);
-  localStorage.setItem("username", data.data.username);
-  localStorage.setItem("avatar", data.data.avatar);
-  localStorage.setItem("userId", data.data.id);
-  $router.push("/");
+  await localStorage.setItem("username", data.data.username);
+  await localStorage.setItem("avatar", data.data.avatar);
+  await localStorage.setItem("userId", data.data.id);
+  await localStorage.setItem("token", data.data.token);
+  await $router.push("/");
 }
 
 {
