@@ -227,21 +227,13 @@ function uploadFn(files) {
   return new Promise(resolve => {
     resolve({
       "url": BASE_URL + "/note/upload/all/" + userId.value, // todo Url
-      "fieldName": "file"
-      // "formFields": [
-      //   {
-      //     "name": "field",
-      //     "value": field.value
-      //   },
-      //   {
-      //     name: "createTime",
-      //     value: createTime
-      //   }
-      // ],
-      // "headers": [{
-      //   "name": "Content-Type",
-      //   "value": 'application/json'
-      // }]
+      "fieldName": "file",
+      "headers": [
+        {
+          name: 'token',
+          value: localStorage.getItem("token")
+        }
+      ]
     })
   })
 }
@@ -250,8 +242,14 @@ function uploadFn(files) {
 function uploadImgFn(files) {
   return new Promise(resolve => {
     resolve({
-      "url": BASE_URL + imgFile + userId.value, // todo Url
-      "fieldName": "file"
+      "url": BASE_URL + "/image/upload/" + userId.value, // todo Url
+      "fieldName": "file",
+      "headers": [
+        {
+          name: 'token',
+          value: localStorage.getItem("token")
+        }
+      ]
     })
   })
 }
@@ -264,7 +262,7 @@ function submit() {
 }
 
 function submitImg() {
-  ImgUploader.value.upload();
+  imgUploader.value.upload();
 }
 
 // 上传成功回调
