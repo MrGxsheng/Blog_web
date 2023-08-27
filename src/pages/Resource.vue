@@ -73,7 +73,7 @@
             </q-card-section>
 
             <q-card-actions>
-              <q-btn flat @click="copyToClipboard(fi.url)">获取链接</q-btn>
+              <q-btn flat @click="onClipText(fi.url)">获取链接</q-btn>
               <q-btn flat @click="name = !name ; newId = fi.id">重命名</q-btn>
               <q-btn flat @click="openFile(fi.url)">下载</q-btn>
               <q-btn flat @click="deleteFile(fi.id)">删除</q-btn>
@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import {CommSuccess} from "../components/NotifyTools";
+import {CommFail, CommSuccess} from "../components/NotifyTools";
 import {ref} from "vue";
 import {api} from "../boot/axios";
 import {BASE_URL} from "../components/models";
@@ -162,10 +162,41 @@ function deleteFile(id) {
 }
 
 // 简单使用 复制内容到粘贴板
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text);
-  CommSuccess("粘贴成功");
-}
+const onClipText = (text) => {
+  handleCopyValue(text)
+      .then(() => {
+        CommSuccess("复制成功");
+      })
+      .catch(() => {
+        CommFail("自动复制失败");
+      });
+};
+
+const handleCopyValue = (text) => {
+  //浏览器禁用了非安全域的 navigator.clipboard 对象
+  //在线上环境会报错 TypeError: Cannot read properties of undefined (reading 'writeText')
+  if (!navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  } else {
+    // 判断是否支持拷贝
+    if (!document.execCommand("copy")) return Promise.reject();
+    // 创建标签，并隐藏
+    const textArea = document.createElement("textarea");
+    textArea.style.position = "fixed";
+    textArea.style.top = textArea.style.left = "-100vh";
+    textArea.style.opacity = "0";
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    // 聚焦、复制
+    textArea.focus();
+    textArea.select();
+    return new Promise((resolve, reject) => {
+      // 不知为何，必须写这个三目，不然copy不上
+      document.execCommand("copy") ? resolve() : reject();
+      textArea.remove();
+    });
+  }
+};
 
 
 // 上传文件
@@ -173,7 +204,13 @@ function uploadFileFn(files) {
   return new Promise(resolve => {
     resolve({
       "url": BASE_URL + "/file/add/" + userId.value, // todo ImgUrl
-      "fieldName": "file"
+      "fieldName": "file",
+      "headers": [
+        {
+          name: 'token',
+          value: localStorage.getItem("token")
+        }
+      ]
     })
   })
 }
